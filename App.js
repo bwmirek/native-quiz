@@ -1,51 +1,50 @@
+import React, { useEffect } from 'react';
+import { NavigationContainer, useNavigation } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-function HomeScreen() {
-  return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <Text>Home Screen</Text>
-    </View>
-  );
-}
+import HomeScreen from './screens/HomeScreen';
+import QuizScreen from './screens/QuizScreen';
+import ResultsScreen from './screens/ResultsScreen';
+import RulesScreen from './screens/RulesScreen';
 
-function QuizScreen() {
-  return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <Text>Quiz Screen</Text>
-    </View>
-  );
-}
-
-function ResultScreen() {
-  return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <Text>Result Screen</Text>
-    </View>
-  );
-}
-
+const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
+
+function Root() {
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    (async () => {
+      const visited = await AsyncStorage.getItem('@visited');
+      if (visited !== true) {
+        await AsyncStorage.setItem('@visited', true);
+        navigation.navigate('Rules');
+      }
+    })();
+  }, []);
+
+  return (
+    <Drawer.Navigator initialRouteName="Home">
+      <Drawer.Screen name="Home" component={HomeScreen}/>
+      <Drawer.Screen name="Quiz" component={QuizScreen}/>
+      <Drawer.Screen name="Results" component={ResultsScreen}/>
+    </Drawer.Navigator>
+  );
+}
 
 export default function App() {
   return (
     <NavigationContainer>
-      <Drawer.Navigator initialRouteName="Home">
-        <Drawer.Screen name="Home" component={HomeScreen} />
-        <Drawer.Screen name="Quiz" component={QuizScreen} />
-        <Drawer.Screen name="Result" component={ResultScreen} />
-      </Drawer.Navigator>
+      <Stack.Navigator>
+        <Stack.Screen
+          name="Root"
+          component={Root}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen name="Rules" component={RulesScreen}/>
+      </Stack.Navigator>
     </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
