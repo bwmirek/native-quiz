@@ -1,4 +1,5 @@
 import React from 'react';
+import _ from 'lodash';
 import { Text, View, ScrollView, SafeAreaView, Pressable } from 'react-native';
 
 export default function QuizScreen({ route, navigation }) {
@@ -14,6 +15,7 @@ export default function QuizScreen({ route, navigation }) {
     try {
       const response = await fetch(`https://tgryl.pl/quiz/test/${route.params.id}`);
       const json = await response.json();
+      json.tasks = _.shuffle(json.tasks);
       setQuiz(json);
     } catch (error) {
       console.error(error);
@@ -24,6 +26,8 @@ export default function QuizScreen({ route, navigation }) {
 
   React.useEffect(() => {
     setLoading(true);
+    setPoints(0);
+    setIndex(0);
     getTests();
   }, [route.params.id]);
 
@@ -79,64 +83,69 @@ export default function QuizScreen({ route, navigation }) {
         {isLoading ? (
           <Text>Loading...</Text>
         ) : (
-          <View style={{ backgroundColor: 'lightgray', borderBottom: '1px solid black', padding: 16, marginBottom: 16 }}>
-            <View style={{ flexDirection: 'row', marginBottom: 8 }}>
-              <Text style={{ flexShrink: 1, fontWeight: 'bold' }}>
-                ({index + 1}/{quiz.tasks.length}) {quiz.tasks[index].question}
-              </Text>
-            </View>
-            <View>
-              {quiz.tasks[index].answers.map((item, key) => {
-                return (
-                  <Pressable key={key} onPress={() => {
-                    setClicked(true);
-                    if (item.isCorrect) {
-                      setPoints(points + 1);
-                    }
-
-                    setTimeout(() => {
-                      setClicked(false);
-                      if (index + 1 === quiz.tasks.length) {
-                        fetch('http://tgryl.pl/quiz/result', {
-                          method: 'POST',
-                          headers: {
-                            Accept: 'application/json',
-                            'Content-Type': 'application/json'
-                          },
-                          body: JSON.stringify({
-                            nick: 'Bartek',
-                            score: points,
-                            total: quiz.tasks.length,
-                            type: quiz.tags.join(', ')
-                          })
-                        }).then(() => {
-                          navigation.navigate('Results');
-                        });
-                      } else {
-                        setIndex(index + 1);
+          <View>
+            <Text style={{marginBottom: 16, fontSize: 32}}>
+              {quiz.name}
+            </Text>
+            <View style={{ backgroundColor: 'lightgray', borderBottom: '1px solid black', padding: 16, marginBottom: 16 }}>
+              <View style={{ flexDirection: 'row', marginBottom: 8 }}>
+                <Text style={{ flexShrink: 1, fontWeight: 'bold' }}>
+                  ({index + 1}/{quiz.tasks.length}) {quiz.tasks[index].question}
+                </Text>
+              </View>
+              <View>
+                {quiz.tasks[index].answers.map((item, key) => {
+                  return (
+                    <Pressable key={key} onPress={() => {
+                      setClicked(true);
+                      if (item.isCorrect) {
+                        setPoints(points + 1);
                       }
-                    }, 500);
-                  }}>
-                    <View style={{
-                      flexDirection: 'row',
-                      padding: 8,
-                      marginBottom: 16,
-                      border: '1px dashed black',
-                      backgroundColor: clicked ? item.isCorrect ? 'green' : 'red' : 'white',
+
+                      setTimeout(() => {
+                        setClicked(false);
+                        if (index + 1 === quiz.tasks.length) {
+                          fetch('http://tgryl.pl/quiz/result', {
+                            method: 'POST',
+                            headers: {
+                              Accept: 'application/json',
+                              'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                              nick: 'Bartek',
+                              score: points,
+                              total: quiz.tasks.length,
+                              type: quiz.tags.join(', ')
+                            })
+                          }).then(() => {
+                            navigation.navigate('Results');
+                          });
+                        } else {
+                          setIndex(index + 1);
+                        }
+                      }, 500);
                     }}>
-                      <Text style={{ flexShrink: 1, }}>{key + 1}. {item.content}</Text>
-                    </View>
-                  </Pressable>
-                );
-              })}
-            </View>
-            <View style={{ flex: 2, flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={{ fontWeight: 'light', fontSize: 10, textTransform: 'uppercase' }}>
-                Punkty: {points} / {quiz.tasks.length}
-              </Text>
-              <Text style={{ fontWeight: 'light', fontSize: 10, textTransform: 'uppercase' }}>
-                {timer}
-              </Text>
+                      <View style={{
+                        flexDirection: 'row',
+                        padding: 8,
+                        marginBottom: 16,
+                        border: '1px dashed black',
+                        backgroundColor: clicked ? item.isCorrect ? 'green' : 'red' : 'white',
+                      }}>
+                        <Text style={{ flexShrink: 1, }}>{key + 1}. {item.content}</Text>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+              <View style={{ flex: 2, flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Text style={{ fontWeight: 'light', fontSize: 10, textTransform: 'uppercase' }}>
+                  Punkty: {points} / {quiz.tasks.length}
+                </Text>
+                <Text style={{ fontWeight: 'light', fontSize: 10, textTransform: 'uppercase' }}>
+                  {timer}
+                </Text>
+              </View>
             </View>
           </View>
         )}

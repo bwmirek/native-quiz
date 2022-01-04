@@ -1,9 +1,10 @@
 import React from 'react';
 import { FlatList, Text, View, ScrollView, SafeAreaView, RefreshControl, Pressable } from 'react-native';
+import _ from 'lodash';
 
 const Item = (props) => {
   return (
-    <Pressable onPress={() => props.navigation.navigate('Quiz', {id: props.id})}>
+    <Pressable onPress={() => props.navigation.navigate('Quiz', { id: props.id })}>
       <View style={{ backgroundColor: 'lightgray', borderBottom: '1px solid black', padding: 16, marginBottom: 16 }}>
         <View style={{ flex: 2, flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8, flexWrap: 'wrap' }}>
           <View>
@@ -27,7 +28,7 @@ const Item = (props) => {
   );
 };
 
-export default function HomeScreen({navigation}) {
+export default function HomeScreen({ navigation }) {
   const renderItem = (props) => <Item {...props.item} navigation={navigation}/>;
 
   const [isLoading, setLoading] = React.useState(true);
@@ -65,12 +66,21 @@ export default function HomeScreen({navigation}) {
         }
         style={{ width: '100%' }}
       >
-        <Text>Home Screen</Text>
+        <Pressable
+          onPress={() => navigation.navigate('Quiz', { id: _.shuffle(quizzes)[0].id })}
+          style={{
+            background: 'lightblue',
+            padding: 8,
+            marginBottom: 8
+          }}
+        >
+          <Text>Losuj test</Text>
+        </Pressable>
         {isLoading ? (
           <Text>Loading...</Text>
         ) : (
           <FlatList
-            data={quizzes}
+            data={_.shuffle(quizzes)}
             renderItem={renderItem}
             keyExtractor={item => item.id}
           />
