@@ -1,52 +1,46 @@
 import React from 'react';
 import { FlatList, Text, View, ScrollView, SafeAreaView, RefreshControl } from 'react-native';
 
-const results = [
-  {
-    nick: 'Marek',
-    score: 18,
-    total: 20,
-    type: 'historia',
-    date: '2018-11-22',
-  },
-  {
-    nick: 'Adam',
-    score: 8,
-    total: 20,
-    type: 'j. polski',
-    date: '2018-11-25',
-  },
-  {
-    nick: 'Magda',
-    score: 20,
-    total: 20,
-    type: 'biologia',
-    date: '2018-11-28',
-  },
-];
-
 const Item = (props) => {
   return (
-    <View>
-      <Text>{props.nick}</Text>
-      <Text>{props.score} / {props.total}</Text>
-      <Text>{props.type}</Text>
-      <Text>{props.date}</Text>
+    <View style={{ backgroundColor: 'lightgray', borderBottom: '1px solid black', padding: 16, marginBottom: 16 }}>
+      <View style={{ flex: 2, flexDirection: 'row', justifyContent: 'space-between' }}>
+        <Text style={{ fontWeight: 'bold' }}>{props.nick}</Text>
+        <Text>{props.score} / {props.total}</Text>
+      </View>
+      <View style={{ flex: 2, flexDirection: 'row', justifyContent: 'space-between' }}>
+        <Text style={{ fontWeight: 'light', fontSize: 10, textTransform: 'uppercase' }}>{props.type}</Text>
+        <Text>{props.createdOn}</Text>
+      </View>
     </View>
   );
 };
 
-const wait = (timeout) => {
-  return new Promise(resolve => setTimeout(resolve, timeout));
-};
-
 export default function ResultsScreen() {
   const renderItem = (props) => <Item {...props.item}/>;
-  const [refreshing, setRefreshing] = React.useState(false);
+
+  const [isLoading, setLoading] = React.useState(true);
+  const [results, setResults] = React.useState([]);
 
   const onRefresh = React.useCallback(() => {
-    setRefreshing(true);
-    wait(2000).then(() => setRefreshing(false));
+    setLoading(true);
+    getResults();
+  }, []);
+
+  const getResults = async () => {
+    try {
+      const response = await fetch('https://tgryl.pl/quiz/results');
+      const json = await response.json();
+      setResults(json);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    getResults();
   }, []);
 
   return (
@@ -54,17 +48,22 @@ export default function ResultsScreen() {
       <ScrollView
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
+            refreshing={isLoading}
             onRefresh={onRefresh}
           />
         }
+        style={{width: '100%'}}
       >
         <Text>Result Screen</Text>
-        <FlatList
-          data={results}
-          renderItem={renderItem}
-          keyExtractor={item => item.nick}
-        />
+        {isLoading ? (
+          <Text>Loading...</Text>
+        ) : (
+          <FlatList
+            data={results.reverse().slice(0, 20)}
+            renderItem={renderItem}
+            keyExtractor={item => item.id}
+          />
+        )}
       </ScrollView>
     </SafeAreaView>
   );
